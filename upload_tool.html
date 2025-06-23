@@ -225,7 +225,11 @@ def clean_headers(df):
 
 def merge_reference_data(df):
     reference = get_reference_table()
-    reference = reference[[col for col in reference.columns if col not in df.columns or col == "domain"]]
+    # reference data takes priority on these columns
+    reference_keep = ["domain", "urn", "la_code", "la_code_new", "local_authority", "region_code", "region_name"]
+    reference = reference[reference_keep]
+
+    df = df.drop(columns=[col for col in reference.columns if col != "domain" and col in df.columns])
     merged = pd.merge(df, reference, on="domain", how="left")
     return merged
 
@@ -303,6 +307,7 @@ if df_main is not None:
     if "first_name" in all_contacts.columns:
         all_contacts.sort_values(by="first_name", inplace=True)
 
+    all_contacts.fillna("", inplace=True) # replace NaNs for easier onward excel use
     csv_data = all_contacts.to_csv(index=False).encode("utf-8")
     st.download_button(
         label="Download Merged Contacts",
