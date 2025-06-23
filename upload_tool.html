@@ -241,11 +241,15 @@ if uploaded_wix is not None:
         df_wix = pd.read_csv(uploaded_wix)
         df_wix = clean_headers(df_wix)
 
-        df_wix.rename(columns={"email_1": "email"}, inplace=True)
-        df_wix["email"] = df_wix["email"].astype(str).str.strip().str.lower()
-        df_wix["domain"] = df_wix["email"].str.extract(r"@(.+)$")[0]
-        df_wix["source"] = "Wix"
+        if "email" not in df_wix.columns:
+            st.error("No email field found in Wix contacts after header cleaning.")
+        else:
+            df_wix["email"] = df_wix["email"].astype(str).str.strip().str.lower()
+            df_wix["domain"] = df_wix["email"].str.extract(r"@(.+)$")[0]
+            df_wix["source"] = "Wix"
 
+        # need to further consider how/which duplicate take priority and which to remove # DEBUG
+        # for now, prioritise the main contacts is correct approach
         if df_main is not None:
             existing_emails = df_main["email"].dropna().unique()
             df_wix = df_wix[~df_wix["email"].isin(existing_emails)]
