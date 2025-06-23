@@ -27,7 +27,7 @@ st.title("Process Contacts")
 st.markdown("[See repo README for processing logic →](https://github.com/data-to-insight/d2i-contacts/blob/main/README.md)")
 
 def get_reference_table():
-    raw_csv = """domain,urn,la_code,la_code_new,local_authority_ons_name,region_code,region_name
+    raw_csv = """domain,urn,la_code,la_code_new,local_authority,region_code,region_name
 lbbd.gov.uk,80486,301,E09000002,Barking and Dagenham,GL,London
 barnet.gov.uk,80487,302,E09000003,Barnet,GL,London
 barnsley.gov.uk,80426,370,E08000016,Barnsley,YH,Yorkshire and the Humber
@@ -187,30 +187,38 @@ york.gov.uk,80453,816,E06000014,York,YH,Yorkshire and the Humber
 """
     return pd.read_csv(StringIO(raw_csv))
 
+
 def clean_headers(df):
-    # Strip and lowercase only
     df.columns = [col.strip().lower() for col in df.columns]
 
-    # Replace spaces with underscores safely
-    df.columns = [col.replace(" ", "_") for col in df.columns]
-
-    # Header normalisation mapping
     rename_map = {
+        "first name": "first_name",
+        "last name": "last_name",
+        "email 1": "email",
+        "email 2": "email_2",
+        "phone 1": "phone",
+        "address 1 - city": "city",
+        "address 1 - country": "country",
+        "subscriber status": "email_subscriber_status",
+        "last activity": "last_activity",
+        "last activity date (utc+0)": "last_activity_date",
+        "last_activity_date_(utc+0)": "last_activity_date",
         "email_address": "email",
         "email1": "email",
         "email_1": "email",
-        "first name": "first_name",
-        "last name": "last_name",
         "local_authority_ons_name": "local_authority",
         "la": "local_authority"
     }
 
-    # Merge logic for created at fields
-    for col in df.columns:
-        if col.startswith("created_at") or "created_at" in col:
-            rename_map[col] = "submission_date"
-
     df.rename(columns=rename_map, inplace=True)
+
+    drop_cols = [
+        "email 3", "email 4", "address 2 - country", "created at (utc+0)", "language"
+    ]
+    for col in drop_cols:
+        if col in df.columns:
+            df.drop(columns=col, inplace=True)
+
     return df
 
 
