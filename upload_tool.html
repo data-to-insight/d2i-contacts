@@ -188,19 +188,31 @@ york.gov.uk,80453,816,E06000014,York,YH,Yorkshire and the Humber
     return pd.read_csv(StringIO(raw_csv))
 
 def clean_headers(df):
-    df.columns = [re.sub(r"\s+", "_", col.strip().lower()) for col in df.columns]
+    # Strip and lowercase only
+    df.columns = [col.strip().lower() for col in df.columns]
+
+    # Replace spaces with underscores safely
+    df.columns = [col.replace(" ", "_") for col in df.columns]
+
+    # Header normalisation mapping
     rename_map = {
         "email_address": "email",
         "email1": "email",
         "email_1": "email",
+        "first name": "first_name",
+        "last name": "last_name",
         "local_authority_ons_name": "local_authority",
         "la": "local_authority"
     }
-    df.rename(columns=rename_map, inplace=True)
+
+    # Merge logic for created at fields
     for col in df.columns:
-        if col.startswith("created_at") or col.startswith("created_at_(utc"):
-            df.rename(columns={col: "submission_date"}, inplace=True)
+        if col.startswith("created_at") or "created_at" in col:
+            rename_map[col] = "submission_date"
+
+    df.rename(columns=rename_map, inplace=True)
     return df
+
 
 uploaded_main = st.file_uploader("Upload main D2I contacts CSV", type=["csv"], key="main_contacts")
 uploaded_wix = st.file_uploader("Upload Wix contacts CSV", type=["csv"], key="wix_contacts")
@@ -239,8 +251,11 @@ if uploaded_main is not None:
 if uploaded_wix is not None:
     try:
         df_wix = pd.read_csv(uploaded_wix)
+
+        st.write("Wix headers before cleaning:", list(df_wix.columns)) # DEBUG
         df_wix = clean_headers(df_wix)
-        st.write("Wix headers after cleaning1:", df_wix.columns.tolist())
+        st.write("Wix headers after cleaning1:", list(df_wix.columns)) # DEBUG
+
 
         if "email" not in df_wix.columns:
             st.error("No email field found in Wix contacts after header cleaning.")
@@ -249,7 +264,7 @@ if uploaded_wix is not None:
             df_wix["domain"] = df_wix["email"].str.extract(r"@(.+)$")[0]
             df_wix["source"] = "Wix"
 
-        st.write("Wix headers after cleaning2:", df_wix.columns.tolist())
+        st.write("Wix headers after cleaning2:", df_wix.columns.tolist()) # DEBUG
 
         # need to further consider how/which duplicate take priority and which to remove # DEBUG
         # for now, prioritise the main contacts is correct approach
