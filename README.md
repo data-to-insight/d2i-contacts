@@ -96,6 +96,12 @@ Using [Contacts Processing Tool](https://data-to-insight.github.io/d2i-contacts/
 - [stlite](https://github.com/whitphx/stlite) to run Streamlit app directly in browser (WebAssembly + Pyodide)  
 - [Bootstrap 5](https://getbootstrap.com) for layout  
 
+
+## Testing
+
+- pip install streamlit pandas
+- streamlit run streamlit_app.py
+
 ---
 
 ## Deployment/Development notes
