@@ -188,6 +188,21 @@ york.gov.uk,80453,816,E06000014,York,YH,Yorkshire and the Humber
     return pd.read_csv(StringIO(raw_csv))
 
 
+def get_reference_table():
+    raw_csv = """domain,urn,la_code,la_code_new,local_authority,region_code,region_name
+lbbd.gov.uk,80486,301,E09000002,Barking and Dagenham,GL,London
+barnet.gov.uk,80487,302,E09000003,Barnet,GL,London
+barnsley.gov.uk,80426,370,E08000016,Barnsley,YH,Yorkshire and the Humber
+bathnes.gov.uk,80427,800,E06000022,Bath and North East Somerset,SW,South West
+bedford.gov.uk,80428,822,E06000055,Bedford Borough,E,East of England
+bexley.gov.uk,80488,303,E09000004,Bexley,GL,London
+birminghamchildrenstrust.co.uk,80429,330,E08000025,Birmingham,WM,West Midlands
+blackburn.gov.uk,80430,889,E06000008,Blackburn with Darwen,NW,North West
+blackpool.gov.uk,80431,890,E06000009,Blackpool,NW,North West
+bolton.gov.uk,80432,350,E08000001,Bolton,NW,North West
+"""
+    return pd.read_csv(StringIO(raw_csv))
+
 def clean_headers(df):
     df.columns = [col.strip().lower() for col in df.columns]
 
@@ -213,14 +228,31 @@ def clean_headers(df):
     df.rename(columns=rename_map, inplace=True)
 
     drop_cols = [
-        "email 3", "email 4", "address 2 - country", "created at (utc+0)", "language"
+        "email 3", "email 4", "address 2 - country", "created at (utc+0)", "language",
+        "company", "labels"
     ]
-    for col in drop_cols:
-        if col in df.columns:
-            df.drop(columns=col, inplace=True)
+    df.drop(columns=[col for col in drop_cols if col in df.columns], inplace=True)
 
     return df
 
+def merge_reference_data(df):
+    reference = get_reference_table()
+    reference_fields = ["urn", "la_code", "la_code_new", "local_authority", "region_code", "region_name"]
+    enriched = pd.merge(df, reference, on="domain", how="left", suffixes=("", "_ref"))
+    for col in reference_fields:
+        enriched[col] = enriched[f"{col}_ref"].combine_first(enriched.get(col))
+        if f"{col}_ref" in enriched.columns:
+            enriched.drop(columns=[f"{col}_ref"], inplace=True)
+    return enriched
+
+def merge_wix_contacts(df_main, df_wix):
+    existing_emails = df_main["email"].dropna().unique()
+    df_wix_new = df_wix[~df_wix["email"].isin(existing_emails)].copy()
+    df_wix_new["new_contact"] = "Y"
+    df_main["new_contact"] = "N"
+    combined = pd.concat([df_main, df_wix_new], ignore_index=True)
+    combined.drop_duplicates(subset="email", keep="first", inplace=True)
+    return combined
 
 uploaded_main = st.file_uploader("Upload main D2I contacts CSV", type=["csv"], key="main_contacts")
 uploaded_wix = st.file_uploader("Upload Wix contacts CSV", type=["csv"], key="wix_contacts")
@@ -236,22 +268,10 @@ if uploaded_main is not None:
     try:
         df_main = pd.read_csv(uploaded_main)
         df_main = clean_headers(df_main)
-
-        df_main.rename(columns={
-            "first_name": "first_name",
-            "last_name": "last_name",
-            "la": "local_authority",
-            "local_authority_ons_name": "local_authority",
-            "email": "email",
-            "job_title": "role"
-        }, inplace=True)
-
         df_main["email"] = df_main["email"].astype(str).str.strip().str.lower()
         df_main["domain"] = df_main["email"].str.extract(r"@(.+)$")[0]
         df_main["source"] = "Main"
-
         st.success(f"Main contacts loaded: {uploaded_main.name}")
-
     except Exception as e:
         st.error(f"Error loading main contacts: {e}")
         df_main = None
@@ -259,36 +279,14 @@ if uploaded_main is not None:
 if uploaded_wix is not None:
     try:
         df_wix = pd.read_csv(uploaded_wix)
-
-        # Show raw headers for debug
-        st.write("Wix headers BEFORE:", df_wix.columns.tolist())
-
-        # Clean: lowercase and strip only
-        df_wix.columns = [col.strip().lower() for col in df_wix.columns]
-
-        # Explicit rename of "email 1" to "email"
-        if "email 1" in df_wix.columns:
-            df_wix.rename(columns={"email 1": "email"}, inplace=True)
-
-        st.write("Wix headers AFTER:", df_wix.columns.tolist())
-
-        if "email" not in df_wix.columns:
-            st.error("No email field found in Wix contacts.")
-        else:
-            df_wix["email"] = df_wix["email"].astype(str).str.strip().str.lower()
-            df_wix["domain"] = df_wix["email"].str.extract(r"@(.+)$")[0]
-            df_wix["source"] = "Wix"
-
-        if df_main is not None:
-            existing_emails = df_main["email"].dropna().unique()
-            df_wix = df_wix[~df_wix["email"].isin(existing_emails)]
-
-        st.success(f"Wix contacts loaded and filtered: {uploaded_wix.name}")
-
+        df_wix = clean_headers(df_wix)
+        df_wix["email"] = df_wix["email"].astype(str).str.strip().str.lower()
+        df_wix["domain"] = df_wix["email"].str.extract(r"@(.+)$")[0]
+        df_wix["source"] = "Wix"
+        st.success(f"Wix contacts loaded: {uploaded_wix.name}")
     except Exception as e:
         st.error(f"Error loading Wix contacts: {e}")
         df_wix = None
-
 
 if uploaded_remove is not None:
     try:
@@ -303,38 +301,24 @@ else:
     df_remove_emails = []
 
 if df_main is not None:
-    all_contacts = df_main.copy()
-    df_wix = df_wix if df_wix is not None else pd.DataFrame()
-
-    if not df_wix.empty:
-        df_wix["new_contact"] = "Y"
-        df_main["new_contact"] = "N"
-        all_contacts = pd.concat([all_contacts, df_wix], ignore_index=True)
+    if df_wix is not None:
+        all_contacts = merge_wix_contacts(df_main, df_wix)
     else:
+        all_contacts = df_main.copy()
         all_contacts["new_contact"] = "N"
 
-    all_contacts.drop_duplicates(subset="email", keep="first", inplace=True)
+    all_contacts = merge_reference_data(all_contacts)
 
-    # remove unsubscribed contacts
     removed_count = all_contacts["email"].isin(df_remove_emails).sum()
     all_contacts = all_contacts[~all_contacts["email"].isin(df_remove_emails)]
 
-    # enrich using reference table on domain
-    reference_table = get_reference_table()
-    if "domain" in all_contacts.columns:
-        all_contacts = pd.merge(all_contacts, reference_table, on="domain", how="left")
-
-    # standardise display fields
-    for col in ["first_name", "last_name", "local_authority", "role"]:
+    standard_cols = ["first_name", "last_name", "local_authority", "role"]
+    for col in standard_cols:
         if col in all_contacts.columns:
             all_contacts[col] = all_contacts[col].astype(str).str.strip().str.title()
 
     if "first_name" in all_contacts.columns:
         all_contacts.sort_values(by="first_name", inplace=True)
-
-    # remove reference-only columns no longer needed
-    if "local_authority_ons_name" in all_contacts.columns:
-        all_contacts.drop(columns=["local_authority_ons_name"], inplace=True)
 
     csv_data = all_contacts.to_csv(index=False).encode("utf-8")
     st.download_button(
@@ -345,28 +329,21 @@ if df_main is not None:
     )
 
     st.markdown(f"**{removed_count} contact(s) removed based on unsubscribe list.**")
-
-
     st.subheader("Preview of Contacts (Green = new Wix contact)")
 
-    # Define preferred preview columns
-    preferred_preview_cols = ["first_name", "last_name", "local_authority", "email", "domain", "source", "new_contact"]
-
-    # Only include columns that exist in the merged DataFrame
-    preview_cols = [col for col in preferred_preview_cols if col in all_contacts.columns]
-
+    preview_cols = ["last_name", "email", "source", "new_contact"]
 
     def highlight_new(row):
         return ["background-color: #d4edda" if row.get("new_contact") == "Y" else "" for _ in row]
 
     st.dataframe(all_contacts[preview_cols].style.apply(highlight_new, axis=1))
 
-
     st.subheader("Count of members by domain")
     if "domain" in all_contacts.columns:
         st.write(all_contacts["domain"].value_counts().rename_axis("domain").reset_index(name="count"))
 else:
     st.warning("Upload and process at least the main contacts file to proceed.")
+
         `,
         document.getElementById("stlite-app")
       );
