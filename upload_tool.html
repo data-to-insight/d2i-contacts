@@ -346,14 +346,21 @@ if df_main is not None:
 
     st.markdown(f"**{removed_count} contact(s) removed based on unsubscribe list.**")
 
+
     st.subheader("Preview of Contacts (Green = new Wix contact)")
 
-    preview_cols = ["first_name", "last_name", "local_authority", "email", "domain", "source", "new_contact"]
+    # Define preferred preview columns
+    preferred_preview_cols = ["first_name", "last_name", "local_authority", "email", "domain", "source", "new_contact"]
+
+    # Only include columns that exist in the merged DataFrame
+    preview_cols = [col for col in preferred_preview_cols if col in all_contacts.columns]
+
 
     def highlight_new(row):
         return ["background-color: #d4edda" if row.get("new_contact") == "Y" else "" for _ in row]
 
     st.dataframe(all_contacts[preview_cols].style.apply(highlight_new, axis=1))
+
 
     st.subheader("Count of members by domain")
     if "domain" in all_contacts.columns:
