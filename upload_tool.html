@@ -188,20 +188,6 @@ york.gov.uk,80453,816,E06000014,York,YH,Yorkshire and the Humber
     return pd.read_csv(StringIO(raw_csv))
 
 
-def get_reference_table():
-    raw_csv = """domain,urn,la_code,la_code_new,local_authority,region_code,region_name
-lbbd.gov.uk,80486,301,E09000002,Barking and Dagenham,GL,London
-barnet.gov.uk,80487,302,E09000003,Barnet,GL,London
-barnsley.gov.uk,80426,370,E08000016,Barnsley,YH,Yorkshire and the Humber
-bathnes.gov.uk,80427,800,E06000022,Bath and North East Somerset,SW,South West
-bedford.gov.uk,80428,822,E06000055,Bedford Borough,E,East of England
-bexley.gov.uk,80488,303,E09000004,Bexley,GL,London
-birminghamchildrenstrust.co.uk,80429,330,E08000025,Birmingham,WM,West Midlands
-blackburn.gov.uk,80430,889,E06000008,Blackburn with Darwen,NW,North West
-blackpool.gov.uk,80431,890,E06000009,Blackpool,NW,North West
-bolton.gov.uk,80432,350,E08000001,Bolton,NW,North West
-"""
-    return pd.read_csv(StringIO(raw_csv))
 
 def clean_headers(df):
     df.columns = [col.strip().lower() for col in df.columns]
@@ -231,19 +217,17 @@ def clean_headers(df):
         "email 3", "email 4", "address 2 - country", "created at (utc+0)", "language",
         "company", "labels"
     ]
-    df.drop(columns=[col for col in drop_cols if col in df.columns], inplace=True)
+    for col in drop_cols:
+        if col in df.columns:
+            df.drop(columns=col, inplace=True)
 
     return df
 
 def merge_reference_data(df):
     reference = get_reference_table()
-    reference_fields = ["urn", "la_code", "la_code_new", "local_authority", "region_code", "region_name"]
-    enriched = pd.merge(df, reference, on="domain", how="left", suffixes=("", "_ref"))
-    for col in reference_fields:
-        enriched[col] = enriched[f"{col}_ref"].combine_first(enriched.get(col))
-        if f"{col}_ref" in enriched.columns:
-            enriched.drop(columns=[f"{col}_ref"], inplace=True)
-    return enriched
+    reference = reference[[col for col in reference.columns if col not in df.columns or col == "domain"]]
+    merged = pd.merge(df, reference, on="domain", how="left")
+    return merged
 
 def merge_wix_contacts(df_main, df_wix):
     existing_emails = df_main["email"].dropna().unique()
@@ -251,8 +235,7 @@ def merge_wix_contacts(df_main, df_wix):
     df_wix_new["new_contact"] = "Y"
     df_main["new_contact"] = "N"
     combined = pd.concat([df_main, df_wix_new], ignore_index=True)
-    combined.drop_duplicates(subset="email", keep="first", inplace=True)
-    return combined
+    return combined.drop_duplicates(subset="email", keep="first")
 
 uploaded_main = st.file_uploader("Upload main D2I contacts CSV", type=["csv"], key="main_contacts")
 uploaded_wix = st.file_uploader("Upload Wix contacts CSV", type=["csv"], key="wix_contacts")
@@ -331,7 +314,7 @@ if df_main is not None:
     st.markdown(f"**{removed_count} contact(s) removed based on unsubscribe list.**")
     st.subheader("Preview of Contacts (Green = new Wix contact)")
 
-    preview_cols = ["last_name", "email", "source", "new_contact"]
+    preview_cols = ["first_name", "last_name", "local_authority", "email", "domain", "source", "new_contact"]
 
     def highlight_new(row):
         return ["background-color: #d4edda" if row.get("new_contact") == "Y" else "" for _ in row]
@@ -343,6 +326,7 @@ if df_main is not None:
         st.write(all_contacts["domain"].value_counts().rename_axis("domain").reset_index(name="count"))
 else:
     st.warning("Upload and process at least the main contacts file to proceed.")
+
 
         `,
         document.getElementById("stlite-app")
