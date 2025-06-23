@@ -23,7 +23,7 @@ from io import StringIO
 warnings.simplefilter(action="ignore", category=SettingWithCopyWarning)
 
 st.set_page_config(page_title="Process Contacts")
-st.title("Process NVEST Contacts")
+st.title("Process Contacts")
 st.markdown("[See repo README for processing logic →](https://github.com/data-to-insight/d2i-contacts/blob/main/README.md)")
 
 def get_reference_table():
@@ -184,7 +184,7 @@ wokingham.gov.uk,80582,872,E06000041,Wokingham,SE,South East
 wolverhampton.gov.uk,80583,336,E08000031,Wolverhampton,WM,West Midlands
 worcschildrenfirst.org.uk,80584,885,E10000034,Worcestershire,WM,West Midlands
 york.gov.uk,80453,816,E06000014,York,YH,Yorkshire and the Humber
-""" 
+"""
     return pd.read_csv(StringIO(raw_csv))
 
 def clean_headers(df):
@@ -192,14 +192,14 @@ def clean_headers(df):
     rename_map = {
         "email_address": "email",
         "email1": "email",
+        "local_authority_ons_name": "local_authority",
+        "la": "local_authority"
     }
     df.rename(columns=rename_map, inplace=True)
     for col in df.columns:
         if col.startswith("created_at") or col.startswith("created_at_(utc"):
             df.rename(columns={col: "submission_date"}, inplace=True)
     return df
-
-# reference_table = get_reference_table()  # use to enrich contact data by domain or LA code
 
 uploaded_main = st.file_uploader("Upload main D2I contacts CSV", type=["csv"], key="main_contacts")
 uploaded_wix = st.file_uploader("Upload Wix contacts CSV", type=["csv"], key="wix_contacts")
@@ -214,15 +214,15 @@ removed_count = 0
 if uploaded_main is not None:
     try:
         df_main = pd.read_csv(uploaded_main)
-        df_main.columns = df_main.columns.str.strip().str.lower()
+        df_main = clean_headers(df_main)
 
         df_main.rename(columns={
             "first_name": "first_name",
             "last_name": "last_name",
             "la": "local_authority",
+            "local_authority_ons_name": "local_authority",
             "email": "email",
-            "job_title": "role",
-            "created at (utc+0)": "submission_date"
+            "job_title": "role"
         }, inplace=True)
 
         df_main["email"] = df_main["email"].astype(str).str.strip().str.lower()
@@ -238,9 +238,9 @@ if uploaded_main is not None:
 if uploaded_wix is not None:
     try:
         df_wix = pd.read_csv(uploaded_wix)
-        df_wix.columns = df_wix.columns.str.strip().str.lower()
+        df_wix = clean_headers(df_wix)
 
-        df_wix.rename(columns={"email 1": "email"}, inplace=True)
+        df_wix.rename(columns={"email_1": "email"}, inplace=True)
         df_wix["email"] = df_wix["email"].astype(str).str.strip().str.lower()
         df_wix["domain"] = df_wix["email"].str.extract(r"@(.+)$")[0]
         df_wix["source"] = "Wix"
@@ -258,7 +258,7 @@ if uploaded_wix is not None:
 if uploaded_remove is not None:
     try:
         df_remove = pd.read_csv(uploaded_remove)
-        df_remove.columns = df_remove.columns.str.strip().str.lower()
+        df_remove = clean_headers(df_remove)
         df_remove_emails = df_remove["email"].astype(str).str.strip().str.lower().unique()
         st.success(f"Remove list loaded: {uploaded_remove.name}")
     except Exception as e:
@@ -289,7 +289,6 @@ if df_main is not None:
     if "domain" in all_contacts.columns:
         all_contacts = pd.merge(all_contacts, reference_table, on="domain", how="left")
 
-
     # standardise display fields
     for col in ["first_name", "last_name", "local_authority", "role"]:
         if col in all_contacts.columns:
@@ -297,6 +296,10 @@ if df_main is not None:
 
     if "first_name" in all_contacts.columns:
         all_contacts.sort_values(by="first_name", inplace=True)
+
+    # remove reference-only columns no longer needed
+    if "local_authority_ons_name" in all_contacts.columns:
+        all_contacts.drop(columns=["local_authority_ons_name"], inplace=True)
 
     csv_data = all_contacts.to_csv(index=False).encode("utf-8")
     st.download_button(
@@ -317,9 +320,9 @@ if df_main is not None:
 
     st.dataframe(all_contacts[preview_cols].style.apply(highlight_new, axis=1))
 
-    st.subheader("Count of members by local authority")
-    if "local_authority" in all_contacts.columns:
-        st.write(all_contacts["local_authority"].value_counts().rename_axis("local_authority").reset_index(name="count"))
+    st.subheader("Count of members by domain")
+    if "domain" in all_contacts.columns:
+        st.write(all_contacts["domain"].value_counts().rename_axis("domain").reset_index(name="count"))
 else:
     st.warning("Upload and process at least the main contacts file to proceed.")
         `,
