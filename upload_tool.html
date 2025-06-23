@@ -252,22 +252,25 @@ if uploaded_wix is not None:
     try:
         df_wix = pd.read_csv(uploaded_wix)
 
-        st.write("Wix headers before cleaning:", list(df_wix.columns)) # DEBUG
-        df_wix = clean_headers(df_wix)
-        st.write("Wix headers after cleaning1:", list(df_wix.columns)) # DEBUG
+        # Show raw headers for debug
+        st.write("Wix headers BEFORE:", df_wix.columns.tolist())
 
+        # Clean: lowercase and strip only
+        df_wix.columns = [col.strip().lower() for col in df_wix.columns]
+
+        # Explicit rename of "email 1" to "email"
+        if "email 1" in df_wix.columns:
+            df_wix.rename(columns={"email 1": "email"}, inplace=True)
+
+        st.write("Wix headers AFTER:", df_wix.columns.tolist())
 
         if "email" not in df_wix.columns:
-            st.error("No email field found in Wix contacts after header cleaning.")
+            st.error("No email field found in Wix contacts.")
         else:
             df_wix["email"] = df_wix["email"].astype(str).str.strip().str.lower()
             df_wix["domain"] = df_wix["email"].str.extract(r"@(.+)$")[0]
             df_wix["source"] = "Wix"
 
-        st.write("Wix headers after cleaning2:", df_wix.columns.tolist()) # DEBUG
-
-        # need to further consider how/which duplicate take priority and which to remove # DEBUG
-        # for now, prioritise the main contacts is correct approach
         if df_main is not None:
             existing_emails = df_main["email"].dropna().unique()
             df_wix = df_wix[~df_wix["email"].isin(existing_emails)]
@@ -277,6 +280,7 @@ if uploaded_wix is not None:
     except Exception as e:
         st.error(f"Error loading Wix contacts: {e}")
         df_wix = None
+
 
 if uploaded_remove is not None:
     try:
