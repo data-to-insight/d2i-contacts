@@ -332,6 +332,7 @@ if df_main is not None:
     csv_data = all_contacts.to_csv(index=False).encode("utf-8")
 
     # Inject CSS for custom button colour
+    # although looking like stlite/edge not showing this change
     st.markdown("""
         <style>
         .download-button-custom button {
@@ -345,7 +346,7 @@ if df_main is not None:
         </style>
     """, unsafe_allow_html=True)
 
-    # Wrap button in custom div
+    # Wrap button in custom div to apply colour
     st.markdown('<div class="download-button-custom">', unsafe_allow_html=True)
     st.download_button(
         label="Download Merged Contacts",
@@ -356,11 +357,13 @@ if df_main is not None:
     st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown(f"**{removed_count} contact(s) removed based on unsubscribe list.**")
-    st.subheader("Preview (Green = new Wix contact)")
+    st.subheader("Preview")
+    st.markdown("Green highlight = new Wix contact added")
 
     preview_cols = ["last_name", "local_authority", "email", "source", "new_contact"] # dont need to see all in preview
 
     def highlight_new(row):
+        # block highlight newly added records row with defined colour
         return ["background-color: #d4edda" if row.get("new_contact") == "Y" else "" for _ in row]
 
     st.dataframe(all_contacts[preview_cols].style.apply(highlight_new, axis=1))
