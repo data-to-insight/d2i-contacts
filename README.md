@@ -101,8 +101,11 @@ Using [Contacts Processing Tool](https://data-to-insight.github.io/d2i-contacts/
   - Or the most **complete record** (highest number of filled fields)
 - Merge new Wix contacts into main, tagging with `new_contact = 'Y'`
 - Apply LA reference data (`URN`, `LA codes`, `region info`) using domain as key
-- Remove unsubscribed contacts using email match
-- Standardise casing of fields like `first_name`, `local_authority`, `role`
+  - LA reference data is hard-coded containing : `domain`,`urn`,`la_code`,`la_code_new`,`local_authority`,`region_code`,`region_name`
+  - LA reference data original file is located `\Contacts - New Systems\Admin-Other\` for off-line reference
+- Remove unsubscribed|no-contact contacts using email match from uploaded **unsubscribe list**
+  - The master no-contact list is stored locally at: `\Contacts - New Systems\Admin-Unsubscribe-NoContact\*.csv`
+- Standardise casing of fields `first_name`, `local_authority`, `role`
 - Reorder columns for export, placing core fields at the front
 - Fill all missing/null/blank values for Excel compatibility
 - Export a clean downloadable CSV (`Download Merged Contacts`)
