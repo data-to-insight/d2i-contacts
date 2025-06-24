@@ -24,11 +24,11 @@ Uses **stlite** to run Streamlit/pyodide(in stlite) directly in browser and embe
 Tool(s) available via : [Contacts Tool(s)](https://data-to-insight.github.io/d2i-contacts/)
 
 
-### Problem overview
+## Problem
 
-Our contacts/members have always signed up via our web platform Wix, and through the signup process gained access to both the main tools, and if relevant seperate access to such as the Early Help/Apprenticeships groups. Our outgoing contact/updates have typically gone out to our entire contacts list, or a (Wix)identifiable group within. However, as we increasingly wish to reduce both unneccessary/excess contact with some members and improve individual update quality and relevance of our, our current data(and Wix limited processing) is ineffective. 
+Our contacts/members have always signed up via our web platform Wix, and through the signup process gained access to both the main tools, and if relevant seperate access to such as the Early Help/Apprenticeships groups. Our outgoing contact/updates/newsletters have typically gone out to our entire contacts list, or a (Wix)identifiable group within. However, we increasingly want to reduce both unneccessary/excess/invalid contact with some members and improve individual update quality and relevance of it. Our current data(and Wix limited processing) is proving to be increasingly problematic, uncertain and has an unjustifiable time-cost overhead. One solution is to clean the existing data and look to address the shortfalls within Wix itself. However the potential for introducing new problems specifically around tool access relating to Wix internal labelling, poor efficiency when handling contacts via the Wix defined interface and a long-term plan to move away from Wix to a clean d2i site build(Django) supports an interim move to manage contacts outside of the web site.
 
-### Problem brief
+### Current contacts issues
 
 - Searches in Wix limited to full email search only
 - Use of custom labelling in Wix is problematic on export/import
@@ -79,8 +79,8 @@ Using [Contacts Processing Tool](https://data-to-insight.github.io/d2i-contacts/
 
 ### Related Tech Notes
 
-**To do/consider list**
-1. We need the logic/agreed process to handle those cases where a trust has taken over for example, or LA admin area changed in such as bradford.gov.uk vs bradfordcft.org.uk and cheshirewest.gov.uk vs cheshirewestandchester.gov.uk. 
+**To do/future list**
+1. We need the logic/agreed process to handle those cases where a trust has taken over for example, or LA admin area changed in such as bradford.gov.uk vs bradfordcft.org.uk and cheshirewest.gov.uk vs cheshirewestandchester.gov.uk and add them to the la_reference_data file + code. 
 2. Is it worth adding a 'problem identified' flag column, to make filtering possible issue reocords post-processing efficient? 
 3. How to remove test records - test@d2i.org, robert.harrison@test-signup.gov.uk
 4. Which flag column are we using to highlight non-LA contact? Do we need a d2i_tools column? 
@@ -142,7 +142,7 @@ Using [Contacts Processing Tool](https://data-to-insight.github.io/d2i-contacts/
 ## Tech stack
 
 - [Streamlit](https://streamlit.io) for data interface  
-- [stlite](https://github.com/whitphx/stlite) to run Streamlit app directly in browser (WebAssembly + Pyodide)  
+- [stlite](https://github.com/whitphx/stlite) to run Streamlit app directly in browser (Pyodide)  
 - [Bootstrap 5](https://getbootstrap.com) for layout  
 
 
