@@ -58,15 +58,13 @@ We only refresh/update the master contacts worksheet if the most recent source d
 Using [Contacts Processing Tool](https://data-to-insight.github.io/d2i-contacts/)
 
 **There are x buttons/actions**
-  - *Three for uploading *the needed source contacts & needed data(in this order)
+  - *Three for uploading* the needed source contacts & needed data(in this order)
 
     1. Single file: `\Data to Insight\Contacts - New Systems\<main contacts data as csv only>.csv`
-
     2. Single file: `\Data to Insight\Contacts - New Systems\<Wix latest all contacts download>.csv`   
-
     3. Single file: `\Data to Insight\Contacts - New Systems\zz_no_contact_remove\d2i_do_not_contact_unsubscribe.csv` 
 
-  - *One to download * the resultant processed contacts data
+  - *One to download* the resultant processed contacts data
 
     4. Data downloads as .csv file  `-////processed_contacts_refreshed.csv` 
 
@@ -80,6 +78,16 @@ Using [Contacts Processing Tool](https://data-to-insight.github.io/d2i-contacts/
 ## Important further information
 
 ### Related Tech Notes
+
+1. We need the logic/agreed process to handle those cases where a trust has taken over for example, or LA admin area changed in such as bradford.gov.uk vs bradfordcft.org.uk and cheshirewest.gov.uk vs cheshirewestandchester.gov.uk. 
+2. Is it worth adding a 'problem identified' flag column, to make filtering possible issue reocords post-processing efficient? 
+3. How to remove test records - test@d2i.org, robert.harrison@test-signup.gov.uk
+4. Which flag column are we using to highlight non-LA contact? Do we need a d2i_tools column? 
+5. Manual remove needed on such as socialfinnace.org.uk
+6. Regarding 2. - could check domain is not-LA, but has access to EH/Tools..... 
+
+
+
 
 ### Process Logic
 

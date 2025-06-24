@@ -234,12 +234,19 @@ def merge_reference_data(df):
     return merged
 
 def merge_wix_contacts(df_main, df_wix):
-    existing_emails = df_main["email"].dropna().unique()
+    # Ensure email normalisation and deduplication before merge
+    df_wix["email"] = df_wix["email"].astype(str).str.strip().str.lower()
+    df_wix.drop_duplicates(subset="email", keep="first", inplace=True)
+
+    existing_emails = df_main["email"].dropna().astype(str).str.strip().str.lower().unique()
     df_wix_new = df_wix[~df_wix["email"].isin(existing_emails)].copy()
     df_wix_new["new_contact"] = "Y"
-    df_main["new_contact"] = "N"
+    df_main["new_contact"] = "" # could use N, but for clarity on end worksheet pass empty str
+
     combined = pd.concat([df_main, df_wix_new], ignore_index=True)
-    return combined.drop_duplicates(subset="email", keep="first")
+    combined.drop_duplicates(subset="email", keep="first", inplace=True)  # Final safeguard
+    return combined
+
 
 uploaded_main = st.file_uploader("Upload main|existing D2I contacts CSV", type=["csv"], key="main_contacts")
 uploaded_wix = st.file_uploader("Upload newly downloaded Wix contacts CSV", type=["csv"], key="wix_contacts")
@@ -251,11 +258,21 @@ df_wix = None
 df_remove = None
 removed_count = 0
 
+
+
+
 if uploaded_main is not None:
     try:
         df_main = pd.read_csv(uploaded_main)
         df_main = clean_headers(df_main)
         df_main["email"] = df_main["email"].astype(str).str.strip().str.lower()
+
+        
+        df_main["_non_null_count"] = df_main.replace("", pd.NA).notna().sum(axis=1) # Count non-empty values (ignores "", NaN, None)
+        df_main.sort_values(by=["email", "_non_null_count"], ascending=[True, False], inplace=True) # Sort by email and non-null count descending
+        df_main = df_main.drop_duplicates(subset="email", keep="first") # Drop dups, keep row with highest completeness
+        df_main.drop(columns="_non_null_count", inplace=True) # Remove helper col
+
         df_main["domain"] = df_main["email"].str.extract(r"@(.+)$")[0]
         df_main["source"] = "Main"
         st.success(f"Main contacts loaded: {uploaded_main.name}")
@@ -268,6 +285,17 @@ if uploaded_wix is not None:
         df_wix = pd.read_csv(uploaded_wix)
         df_wix = clean_headers(df_wix)
         df_wix["email"] = df_wix["email"].astype(str).str.strip().str.lower()
+        if "last_activity_date" in df_wix.columns:
+            # in case last_activity is missing
+            # assess which row most likely to be more recent (i.e. with new activity)
+            df_wix["last_activity_date"] = pd.to_datetime(df_wix["last_activity_date"], errors="coerce")
+            df_wix.sort_values(by=["email", "last_activity_date"], ascending=[True, False], inplace=True)
+        else:
+            # no activity to go on, just remove one
+            df_wix.sort_values(by=["email"], inplace=True)
+
+        df_wix.drop_duplicates(subset="email", keep="first", inplace=True)
+
         df_wix["domain"] = df_wix["email"].str.extract(r"@(.+)$")[0]
         df_wix["source"] = "Wix"
         st.success(f"Wix contacts loaded: {uploaded_wix.name}")
