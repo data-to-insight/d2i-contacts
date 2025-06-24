@@ -241,9 +241,9 @@ def merge_wix_contacts(df_main, df_wix):
     combined = pd.concat([df_main, df_wix_new], ignore_index=True)
     return combined.drop_duplicates(subset="email", keep="first")
 
-uploaded_main = st.file_uploader("Upload main D2I contacts CSV", type=["csv"], key="main_contacts")
-uploaded_wix = st.file_uploader("Upload Wix contacts CSV", type=["csv"], key="wix_contacts")
-uploaded_remove = st.file_uploader("Upload remove list CSV (unsubscribes)", type=["csv"], key="remove_list")
+uploaded_main = st.file_uploader("Upload main|existing D2I contacts CSV", type=["csv"], key="main_contacts")
+uploaded_wix = st.file_uploader("Upload newly downloaded Wix contacts CSV", type=["csv"], key="wix_contacts")
+uploaded_remove = st.file_uploader("Upload no-contact|unsubscribe list CSV", type=["csv"], key="remove_list")
 
 all_contacts = None
 df_main = None
@@ -309,12 +309,30 @@ if df_main is not None:
 
     all_contacts.fillna("", inplace=True) # replace NaNs for easier onward excel use
     csv_data = all_contacts.to_csv(index=False).encode("utf-8")
+
+    # Inject CSS for custom button colour
+    st.markdown("""
+        <style>
+        .download-button-custom button {
+            background-color: #f57c00;
+            color: white;
+            border-radius: 5px;
+            padding: 0.5em 1em;
+            font-weight: bold;
+            border: none;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # Wrap button in custom div
+    st.markdown('<div class="download-button-custom">', unsafe_allow_html=True)
     st.download_button(
         label="Download Merged Contacts",
         data=csv_data,
         file_name=f"d2i_merged_contacts_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.csv",
         mime="text/csv"
     )
+    st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown(f"**{removed_count} contact(s) removed based on unsubscribe list.**")
     st.subheader("Preview of Contacts (Green = new Wix contact)")
