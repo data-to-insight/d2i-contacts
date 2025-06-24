@@ -307,7 +307,28 @@ if df_main is not None:
     if "first_name" in all_contacts.columns:
         all_contacts.sort_values(by="first_name", inplace=True)
 
+
+    preferred_col_output_order = [
+    "first_name", "last_name", "domain", "email", "job_title",
+    "region_code", "region_name", "urn", "la_code", "la_code_new",
+    "local_authority", "dcs_or_senior_role", "duplicate", "d2i",
+    "nvest", "send", "apprenticeships", "early_help", "cms"
+    ]
+
+    # only include columns that exist in df from pref_cols
+    existing_preferred = [col for col in preferred_col_output_order if col in all_contacts.columns]
+    remaining_cols = [col for col in all_contacts.columns if col not in existing_preferred]
+    all_contacts = all_contacts[existing_preferred + remaining_cols]
+
+
     all_contacts.fillna("", inplace=True) # replace NaNs for easier onward excel use
+    all_contacts.replace(     # Replace literal "NaN", "nan", "None" (case-insensitive) strings
+        to_replace=r"^(nan|NaN|None)$",
+        value="",
+        regex=True,
+        inplace=True
+    )
+
     csv_data = all_contacts.to_csv(index=False).encode("utf-8")
 
     # Inject CSS for custom button colour
@@ -337,7 +358,7 @@ if df_main is not None:
     st.markdown(f"**{removed_count} contact(s) removed based on unsubscribe list.**")
     st.subheader("Preview (Green = new Wix contact)")
 
-    preview_cols = ["first_name", "last_name", "local_authority", "email", "domain", "source", "new_contact"]
+    preview_cols = ["last_name", "local_authority", "email", "source", "new_contact"] # dont need to see all in preview
 
     def highlight_new(row):
         return ["background-color: #d4edda" if row.get("new_contact") == "Y" else "" for _ in row]
@@ -357,3 +378,7 @@ else:
     </script>
   </body>
 </html>
+
+
+
+	
