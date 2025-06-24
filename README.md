@@ -79,6 +79,7 @@ Using [Contacts Processing Tool](https://data-to-insight.github.io/d2i-contacts/
 
 ### Related Tech Notes
 
+**To do/consider list**
 1. We need the logic/agreed process to handle those cases where a trust has taken over for example, or LA admin area changed in such as bradford.gov.uk vs bradfordcft.org.uk and cheshirewest.gov.uk vs cheshirewestandchester.gov.uk. 
 2. Is it worth adding a 'problem identified' flag column, to make filtering possible issue reocords post-processing efficient? 
 3. How to remove test records - test@d2i.org, robert.harrison@test-signup.gov.uk
@@ -91,19 +92,23 @@ Using [Contacts Processing Tool](https://data-to-insight.github.io/d2i-contacts/
 
 ### Process Logic
 
-- Upload main D2I contacts, optional Wix contacts and unsubscribe list
-- Clean and rename columns to a standard format
-- Drop unused or duplicate fields
-- Normalise email address and extract domain
-- Merge new contacts from Wix using email match
-- Tag (new_contact = 'Y') new contacts from Wix for visibility
-- Apply LA reference data (URN, LA codes, regions) using domain as key
-- Remove unsubscribed emails (from d2i remove|no-contact list)
-- Tidy names and key fields for consistency
-- Fill missing values with blank cells for Excel compatibility
-- Generate downloadable merged contacts CSV
-- Show visual preview with green highlight for new contacts
-- Display domain-level summary counts
+- Upload **main D2I contacts**, optional **Wix contacts**, and **unsubscribe list**
+- Clean and rename columns to a standard format (e.g. `first_name`, `email`)
+- Drop unused or duplicate columns (e.g. `email 3`, `labels`)
+- Normalise email addresses (lowercase, strip spaces) and extract domain
+- Deduplicate both `df_main` and `df_wix` by keeping:
+  - The most **recently active** Wix contact (`last_activity_date`)
+  - Or the most **complete record** (highest number of filled fields)
+- Merge new Wix contacts into main, tagging with `new_contact = 'Y'`
+- Apply LA reference data (`URN`, `LA codes`, `region info`) using domain as key
+- Remove unsubscribed contacts using email match
+- Standardise casing of fields like `first_name`, `local_authority`, `role`
+- Reorder columns for export, placing core fields at the front
+- Fill all missing/null/blank values for Excel compatibility
+- Export a clean downloadable CSV (`Download Merged Contacts`)
+- Show a **green-highlighted preview** of newly added Wix records
+- Display domain-level contact counts for analysis
+
 
 ### Still to do
 
