@@ -335,7 +335,7 @@ if df_main is not None:
     st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown(f"**{removed_count} contact(s) removed based on unsubscribe list.**")
-    st.subheader("Preview of Contacts (Green = new Wix contact)")
+    st.subheader("Preview (Green = new Wix contact)")
 
     preview_cols = ["first_name", "last_name", "local_authority", "email", "domain", "source", "new_contact"]
 
@@ -344,7 +344,7 @@ if df_main is not None:
 
     st.dataframe(all_contacts[preview_cols].style.apply(highlight_new, axis=1))
 
-    st.subheader("Count of members by domain")
+    st.subheader("Members by LA")
     if "domain" in all_contacts.columns:
         st.write(all_contacts["domain"].value_counts().rename_axis("domain").reset_index(name="count"))
 else:
