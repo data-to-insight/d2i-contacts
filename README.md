@@ -47,28 +47,27 @@ Our contacts/members have always signed up via our web platform Wix, and through
 ### Step1: Pre-processing steps
 
 We only refresh/update the master contacts worksheet if the most recent source data is ready to bring in. Confirm/do the following before running the contacts processing tool.
-  1. We need a csv copy of the master contacts list. This is because streamlit or stlite has issues with .xls file handling. So save and upload your contacts as a .csv page ready for import into the too. 
+  1. We need a **csv** copy of the 'master contacts list'(==D2I offline main contacts sheet). This is because streamlit or stlite has issues with .xls file handling, so everything going into the into the tool needs to be .csv format. 
 
-  2. Download the entire Wix contacts. The export option should be accessible via [Customers and Leads > Contacts](https://manage.wix.com/dashboard/af6cb463-8e72-4034-8f73-3641ad5abc9d/contacts?referralInfo=sidebar). Download all the contacts: 
-    - `-.csv`
-  2. -` 
+  2. Download a fresh copy of the entire Wix contacts. The export option is accessible via [Customers and Leads > Contacts](https://manage.wix.com/dashboard/af6cb463-8e72-4034-8f73-3641ad5abc9d/contacts?referralInfo=sidebar). The file can be named anything suitable, but recommend a date for ease of reference `280625.csv`
+
 
 ### Step2: Tool Processing steps
 
 Using [Contacts Processing Tool](https://data-to-insight.github.io/d2i-contacts/)
 
-**There are x buttons/actions**
-  - *Three for uploading* the needed source contacts & needed data(in this order)
+**There are 3 buttons/actions**
+  - *Three for uploading* the needed source contacts & needed additionl data(in this order)
 
     1. Single file: `\Data to Insight\Contacts - New Systems\<main contacts data as csv only>.csv`
     2. Single file: `\Data to Insight\Contacts - New Systems\<Wix latest all contacts download>.csv`   
     3. Single file: `\Data to Insight\Contacts - New Systems\zz_no_contact_remove\d2i_do_not_contact_unsubscribe.csv` 
 
-  - *One to download* the resultant processed contacts data
+  - Then *One to download* the resultant processed contacts data
 
-    4. Data downloads as .csv file  `-////processed_contacts_refreshed.csv` 
+    4. Processed contacts data downloads as .csv file, e.g.  `/processed_contacts_refreshed.csv` 
 
-***The processing occurs immeadiately that the 3rd upload source files are added. There is nothing to press or do in order to initiate the actual processing and the download file is available instantly after the above 3 steps are completed.***
+***The processing occurs immeadiately that the 3rd upload source files are added. The user does not need to press or do anything in order to initiate the actual processing and the download file is available instantly after the above steps 1-3 are completed.***
 
   That's it. Whether you notice any changes or not, all the data in the contacts is now updated and current. 
 
@@ -81,12 +80,11 @@ Using [Contacts Processing Tool](https://data-to-insight.github.io/d2i-contacts/
 
 **To do/future list**
 1. We need the logic/agreed process to handle those cases where a trust has taken over for example, or LA admin area changed in such as bradford.gov.uk vs bradfordcft.org.uk and cheshirewest.gov.uk vs cheshirewestandchester.gov.uk and add them to the la_reference_data file + code. 
-2. Is it worth adding a 'problem identified' flag column, to make filtering possible issue reocords post-processing efficient? 
-3. How to remove test records - test@d2i.org, robert.harrison@test-signup.gov.uk
-4. Which flag column are we using to highlight non-LA contact? Do we need a d2i_tools column? 
+2. Is it worth adding a 'problem identified' flag column on the output file, to make filtering possible issue reocords post-processing efficient? 
+3. How to remove test records - test@d2i.org, robert.harrison@test-signup.gov.uk - we cannot just search for 'test' as might give false positives.
+4. Which flag column are we using to highlight non-LA contact? Do we need a 'd2i_tools' column or use existing 'd2i'? 
 5. Manual remove needed on such as socialfinnace.org.uk
-6. Regarding 2. - could check domain is not-LA, but has access to EH/Tools..... 
-
+6. Regarding 2. - could have a check for when domain is not-LA, but has access to EH/Tools, have some similar name chaecks with different la address(people move la and dont update)
 
 
 
