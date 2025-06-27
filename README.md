@@ -18,7 +18,7 @@ tech_stack:
 
 # Contacts processing to maintain d2i contacts
 
-A browser-based process towards enabling and maintaining a clean(er) and reliable members and contact record; reducing|removing our need to use Wix as core contacts management. Uses **stlite** to run Streamlit/pyodide(in stlite) directly in browser and embeds views via `<iframe>` containers into the html page(s).
+A browser-based process towards enabling and maintaining a clean(er) and reliable members and contact record; reducing|removing our need to use Wix as core contacts management. Uses **stlite** to run Streamlit/pyodide(in stlite) directly in browser and embeds views via `<iframe>` containers into the html page(s). Currently only one tool is defined/requested but this might be extended to include others as needed. 
 
 Tool(s) available via : [Contacts Tool(s)](https://data-to-insight.github.io/d2i-contacts/)
 
