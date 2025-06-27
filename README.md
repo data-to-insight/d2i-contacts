@@ -18,15 +18,14 @@ tech_stack:
 
 # Contacts processing to maintain d2i contacts
 
-A browser-based process towards maintaining our members and contact records, reducing|removing our need to use Wix as core contacts management. 
-Uses **stlite** to run Streamlit/pyodide(in stlite) directly in browser and embeds views via `<iframe>` containers into the html page(s).
+A browser-based process towards enabling and maintaining a clean(er) and reliable members and contact record; reducing|removing our need to use Wix as core contacts management. Uses **stlite** to run Streamlit/pyodide(in stlite) directly in browser and embeds views via `<iframe>` containers into the html page(s).
 
 Tool(s) available via : [Contacts Tool(s)](https://data-to-insight.github.io/d2i-contacts/)
 
 
 ## Problem
 
-Our contacts/members have always signed up via our web platform Wix, and through the signup process gained access to both the main tools, and if relevant seperate access to such as the Early Help/Apprenticeships groups. Our outgoing contact/updates/newsletters have typically gone out to our entire contacts list, or a (Wix)identifiable group within. However, we increasingly want to reduce both unneccessary/excess/invalid contact with some members and improve individual update quality and relevance of it. Our current data(and Wix limited processing) is proving to be increasingly problematic, uncertain and has an unjustifiable time-cost overhead. One solution is to clean the existing data and look to address the shortfalls within Wix itself. However the potential for introducing new problems specifically around tool access relating to Wix internal labelling, poor efficiency when handling contacts via the Wix defined interface and a long-term plan to move away from Wix to a clean d2i site build(Django) supports an interim move to manage contacts outside of the web site.
+Our contacts/members have always signed up via our web platform Wix, and through the signup process gained access to both the main tools, and if relevant seperate access to such as the Early Help/Apprenticeships groups. Our outgoing contact/updates/newsletters have typically gone out to our entire contacts list, or a (Wix)identifiable group within. However, we increasingly want to reduce both unneccessary/excess/invalid contact with some members and improve individual update quality and relevance of it. Our current data(and Wix limited processing) is proving to be increasingly problematic, uncertain and has a bloated time-cost overhead for simple tasks(incl. filtering). One solution is to clean the existing data and look to address the shortfalls within Wix itself. However the potential for introducing new problems specifically around tool access relating to Wix internal labelling, poor efficiency when handling contacts via the Wix defined interface and a long-term plan to move away from Wix to a clean d2i site build(Django) supports an interim move to manage contacts outside of the web site.
 
 ### Current contacts issues
 
