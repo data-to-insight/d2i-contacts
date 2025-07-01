@@ -188,6 +188,62 @@ york.gov.uk,80453,816,E06000014,York,YH,Yorkshire and the Humber
     return pd.read_csv(StringIO(raw_csv))
 
 
+def clean_data(all_contacts):
+    # backfill missing vals
+    all_contacts.fillna("", inplace=True)
+
+    # replace literal 'nan', 'NaN', 'None' str (case-insensitive)
+    all_contacts.replace(
+        to_replace=r"^(nan|NaN|None|Nan)$", 
+        value="", 
+        regex=True, 
+        inplace=True
+    )
+
+    # cols to str (esp if numeric and string mix present)
+    columns_to_check = ['local_authority', 'surname']  
+    for col in columns_to_check:
+        all_contacts[col] = all_contacts[col].astype(str)
+
+    # title case to standard cols
+    standard_cols = ["first_name", "last_name", "local_authority", "role"]
+    for col in standard_cols:
+        if col in all_contacts.columns:
+            all_contacts[col] = all_contacts[col].astype(str).str.strip().str.title()
+
+    return all_contacts
+
+
+def fix_data_case(df):
+    # Dict of operations for each column
+    column_operations = {
+        'first_name': 'title_case',
+        'last_name': 'title_case',
+        'local_authority': 'title_case',
+        'region_name': 'title_case',
+        'region_code': 'upper_case',
+        'domain': 'lower_case',
+        'email': 'lower_case'
+    }
+    
+    # apply transformations
+    for col, operation in column_operations.items():
+        if col in df.columns:
+            if operation == 'title_case':
+                df[col] = df[col].apply(lambda x: x.title() if isinstance(x, str) else x)
+            elif operation == 'upper_case':
+                df[col] = df[col].apply(lambda x: x.upper() if isinstance(x, str) else x)
+            elif operation == 'lower_case':
+                df[col] = df[col].apply(lambda x: x.lower() if isinstance(x, str) else x)
+    
+    # replace NaNs with empty strings
+    df.fillna("", inplace=True)
+    
+    # Replace literal 'nan', 'NaN', 'None' strings with empty string
+    df.replace(to_replace=r"^(nan|NaN|None)$", value="", regex=True, inplace=True)
+    
+    return df
+
 
 def clean_headers(df):
     df.columns = [col.strip().lower() for col in df.columns]
@@ -234,7 +290,8 @@ def merge_reference_data(df):
     return merged
 
 def merge_wix_contacts(df_main, df_wix):
-    # Ensure email normalisation and deduplication before merge
+    # Ensure email normalisation and dedup before merge
+    # important : <wix sign-ups take priority> over existing records in other data sources here
     df_wix["email"] = df_wix["email"].astype(str).str.strip().str.lower()
     df_wix.drop_duplicates(subset="email", keep="first", inplace=True)
 
@@ -248,10 +305,12 @@ def merge_wix_contacts(df_main, df_wix):
     return combined
 
 
+# the three expected uploads. 
 uploaded_main = st.file_uploader("Upload main|existing D2I contacts CSV", type=["csv"], key="main_contacts")
 uploaded_wix = st.file_uploader("Upload newly downloaded Wix contacts CSV", type=["csv"], key="wix_contacts")
 uploaded_remove = st.file_uploader("Upload no-contact|unsubscribe list CSV", type=["csv"], key="remove_list")
 
+# to ensure 
 all_contacts = None
 df_main = None
 df_wix = None
@@ -327,10 +386,6 @@ if df_main is not None:
     removed_count = all_contacts["email"].isin(df_remove_emails).sum()
     all_contacts = all_contacts[~all_contacts["email"].isin(df_remove_emails)]
 
-    standard_cols = ["first_name", "last_name", "local_authority", "role"]
-    for col in standard_cols:
-        if col in all_contacts.columns:
-            all_contacts[col] = all_contacts[col].astype(str).str.strip().str.title()
 
     if "first_name" in all_contacts.columns:
         all_contacts.sort_values(by="first_name", inplace=True)
@@ -348,16 +403,13 @@ if df_main is not None:
     remaining_cols = [col for col in all_contacts.columns if col not in existing_preferred]
     all_contacts = all_contacts[existing_preferred + remaining_cols]
 
-
-    all_contacts.fillna("", inplace=True) # replace NaNs for easier onward excel use
-    all_contacts.replace(     # Replace literal "NaN", "nan", "None" (case-insensitive) strings
-        to_replace=r"^(nan|NaN|None)$",
-        value="",
-        regex=True,
-        inplace=True
-    )
+    # data related fixes 
+    all_contacts = clean_data(all_contacts)    
+    all_contacts = fix_data_case(all_contacts)
 
     csv_data = all_contacts.to_csv(index=False).encode("utf-8")
+
+
 
     # Inject CSS for custom button colour
     # although looking like stlite/edge not showing this change

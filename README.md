@@ -25,18 +25,22 @@ Tool(s) available via : [Contacts Tool(s)](https://data-to-insight.github.io/d2i
 
 ## Problem
 
-Our contacts/members have always signed up via our web platform Wix, and through the signup process gained access to both the main tools, and if relevant seperate access to such as the Early Help/Apprenticeships groups. Our outgoing contact/updates/newsletters have typically gone out to our entire contacts list, or a (Wix)identifiable group within. However, we increasingly want to reduce both unneccessary/excess/invalid contact with some members and improve individual update quality and relevance of it. Our current data(and Wix limited processing) is proving to be increasingly problematic, uncertain and has a bloated time-cost overhead for simple tasks(incl. filtering). One solution is to clean the existing data and look to address the shortfalls within Wix itself. However the potential for introducing new problems specifically around tool access relating to Wix internal labelling, poor efficiency when handling contacts via the Wix defined interface and a long-term plan to move away from Wix to a clean d2i site build(Django) supports an interim move to manage contacts outside of the web site.
+Our contacts/members continue to sign up via our web platform Wix, and through the signup process gain access to both the main tools, and if relevant seperate access to such as the Early Help/Apprenticeships groups. Our outgoing contact/updates/newsletters have historically/typically gone out to our entire contacts list, or a (Wix)identifiable group within. However, we increasingly want to reduce both unneccessary/excess/invalid contact with some members and improve individual update quality and relevance of it. Our current data(and Wix limited processing) is proving to be problematic, uncertain and has a bloated time-cost overhead for simple tasks(incl. filtering). 
+
+One solution is to clean the existing data and then look to address the shortfalls within Wix itself. However within that is the potential for introducing new problems specifically around tool members access tied to Wix internals incl. contact labelling, poor efficiency when handling contacts via the Wix defined interface and the previously mentioned difficulty around reliably grouping contacts. 
+
+We have made a long-term plan to move away from Wix site to a clean d2i site build(most likely using Django), and as such **this tool supports any interim move to manage contacts outside of Wix, but still maintain/refresh members details from Wix** (as this remains our members' single sign-up entry point).
 
 ### Current contacts issues
 
-- Searches in Wix limited to full email search only
+- Searches in Wix limited to complete-email search|name only
 - Use of custom labelling in Wix is problematic on export/import
 - Wix forces a paginated view of contacts, which as d2i base expands is increasingly slow to work with
 - New/Legacy labelling within Wix means we now have unreliable single source of truth
 - Filtering some specific groups e.g. Contacts-NVEST only has heavy time-cost overhead, unreliable
 - Enriching contacts data is not easily possible
 - Data fixes/corrects are record by record 
-- Poor contacts overview enables duplicatwe records
+- Poor contacts overview enables duplicate records
 - NEwsletter rejections can only be handled 1:1 with manual deletion in Wix 
 
 ---
