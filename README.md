@@ -113,8 +113,8 @@ first_name,last_name,domain,email,preferred_title,job_title,dcs_or_senior_role,d
 | local_authority    | Local authority name (as per Ofsted naming)                                        |
 | region_code        | Region code (e.g. E12000007)                                                       |
 | region_name        | Full name of region (e.g. London, North West)                                      |
-| cms                | Case Management System (CMS)                            |
-
+| cms                | Case Management System (CMS)                                                       |
+| new_contact        | Flag, default Y for a new WIX signup within this process run, enables manual chks  |
 
 
 **To do/future list**
