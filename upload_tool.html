@@ -391,11 +391,13 @@ if df_main is not None:
 
 
     preferred_col_output_order = [
-    "first_name", "last_name", "domain", "email", "job_title",
+    "duplicate", "new_contact", "first_name", "last_name", "domain", "email", "job_title",
     "region_code", "region_name", "urn", "la_code", "la_code_new",
-    "local_authority", "dcs_or_senior_role", "duplicate", "d2i",
-    "nvest", "send", "apprenticeships", "early_help", "cms"
+    "local_authority", "dcs_or_senior_role", "duplicate", "d2i", "d2i_tool_access"
+    "nvest", "send", "apprenticeships", "early_help", "cms", "preferred_title"
     ]
+
+    		
 
     # only include columns that exist in df from pref_cols
     existing_preferred = [col for col in preferred_col_output_order if col in all_contacts.columns]

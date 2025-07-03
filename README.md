@@ -79,6 +79,23 @@ Using [Contacts Processing Tool](https://data-to-insight.github.io/d2i-contacts/
 
 ---
 
+### Filter contacts list for newsletters
+
+| Column           | Filter Description                                                                 |
+|------------------|-------------------------------------------------------------------------------------|
+| duplicate        | Contacts flagged as possible duplicates under separate email addresses             |
+| d2i              | `Y` = Receives D2I newsletter                                                       |
+| d2i_tool_access  | `Y` = Has .gov.uk LA email or agreed tool access                                   |
+| nvest            | `Y` and `d2i = N` = Receives only NVEST newsletter                                 |
+| send             | `Y` = Identified as SEND contact (if populated)                                    |
+| apprenticeships  | `Y` = Historic or current apprentice                                               |
+| early_help       | `Y` = Has access to Early Help                                                     |
+| cms              | Flag if linked to a Case Management System (CMS)                                   |
+| new_contact      | `Y` = Identified as new contact in current or last import process (e.g. from Wix)  |
+
+
+--- 
+
 ## Important further information
 
 ### Related Tech Notes
