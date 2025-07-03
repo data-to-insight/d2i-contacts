@@ -90,7 +90,7 @@ Using [Contacts Processing Tool](https://data-to-insight.github.io/d2i-contacts/
 | send             | `Y` = Identified as SEND contact (if populated)                                    |
 | apprenticeships  | `Y` = Historic or current apprentice                                               |
 | early_help       | `Y` = Has access to Early Help                                                     |
-| cms              | Flag if linked to a Case Management System (CMS)                                   |
+| cms              | CMS type for ref                                                                   |
 | new_contact      | `Y` = Identified as new contact in current or last import process (e.g. from Wix)  |
 
 
