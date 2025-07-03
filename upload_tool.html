@@ -200,11 +200,6 @@ def clean_data(all_contacts):
         inplace=True
     )
 
-    # cols to str (esp if numeric and string mix present)
-    columns_to_check = ['local_authority', 'surname']  
-    for col in columns_to_check:
-        all_contacts[col] = all_contacts[col].astype(str)
-
     # title case to standard cols
     standard_cols = ["first_name", "last_name", "local_authority", "role"]
     for col in standard_cols:
