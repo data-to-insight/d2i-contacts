@@ -300,17 +300,21 @@ def merge_wix_contacts(df_main, df_wix):
     return combined
 
 
-# the three expected uploads. 
-uploaded_main = st.file_uploader("Upload main|existing D2I contacts CSV", type=["csv"], key="main_contacts")
-uploaded_wix = st.file_uploader("Upload newly downloaded Wix contacts CSV", type=["csv"], key="wix_contacts")
-uploaded_remove = st.file_uploader("Upload no-contact|unsubscribe list CSV", type=["csv"], key="remove_list")
 
-# to ensure 
+# clear anything cached
 all_contacts = None
 df_main = None
 df_wix = None
 df_remove = None
 removed_count = 0
+
+uploaded_main, uploaded_wix, uploaded_remove = None
+
+# the three expected uploads. 
+uploaded_main = st.file_uploader("Upload main|existing D2I contacts CSV", type=["csv"], key="main_contacts")
+uploaded_wix = st.file_uploader("Upload newly downloaded Wix contacts CSV", type=["csv"], key="wix_contacts")
+uploaded_remove = st.file_uploader("Upload no-contact|unsubscribe list CSV", type=["csv"], key="remove_list")
+
 
 
 
