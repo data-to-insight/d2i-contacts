@@ -1,5 +1,5 @@
 ---
-title: D2I Contacts Processing Tool(s)
+title: README
 authors:
 - Rob Harrison
 status: draft
