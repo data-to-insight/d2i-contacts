@@ -1,5 +1,5 @@
 ---
-title: README
+title: D2I Contacts Tool
 authors:
 - Rob Harrison
 status: draft
