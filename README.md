@@ -32,8 +32,8 @@ One solution is to clean the existing data and address the shortfalls within Wix
 
 ### Issues summarised
 
-- Searches in Wix limited to complete-email|name only
-- Use of custom labelling in Wix is problematic on export/import
+- Searches in Wix interface for contacts is limited to complete-email|name only (no partials or other fields searched)
+- Use of custom labelling in Wix is problematic on export/import 
 - Wix forces a paginated view of members, which as d2i members base expands is increasingly slow to work with 
 - New/Legacy labelling within Wix means we now have unreliable single source of truth
 - Filtering some specific groups e.g. Members-NVEST only has heavy time-cost overhead, unreliable
