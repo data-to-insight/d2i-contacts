@@ -286,30 +286,37 @@ def merge_reference_data(df):
 
 
 def merge_wix_contacts(df_main, df_wix):
-    """
-    Merge Wix contacts into main contacts list
-
-    Rule: if an email exists in Main, keep Main row, Wix can only add new emails
-    """
-    # assumption here that email already canonicalised and deduped in loaders
+    # assume email already been canonicalised and deduped in loaders
     df_main = df_main.copy()
     df_wix  = df_wix.copy()
 
-    # mark sources, only if not already set
-    # (source persists downstream and used later for final de-dup precedence)
+    # mark sources, -only- if not already set
     if "source" not in df_main.columns:
         df_main["source"] = "Main"
     if "source" not in df_wix.columns:
         df_wix["source"] = "Wix"
 
-    # stack & pick winner per email, Main first means never overwritten by same-email Wix record
-    # assumption, local record is more complete/enriched (Wix users near-never update account details)
-    stacked = pd.concat([df_main, df_wix], ignore_index=True, sort=False)
+    # stack & pick winner per email, priority Wix, then recency, then row completeness
+    stacked = pd.concat([df_wix, df_main], ignore_index=True, sort=False)
 
-    # keep first occurrence per email (Main rows come first by construction)
-    out = stacked.drop_duplicates(subset="email", keep="first")
+    if "last_activity_date" in stacked.columns:
+        stacked["__recency"] = pd.to_datetime(stacked["last_activity_date"], errors="coerce")
+    else:
+        stacked["__recency"] = pd.NaT
 
-    # flag new contacts relative to orig main
+    stacked["__non_empty"] = stacked.replace("", pd.NA).notna().sum(axis=1)
+    stacked["__src_pri"]   = (stacked["source"] == "Wix").astype(int)
+
+    stacked.sort_values(
+        by=["email", "__src_pri", "__recency", "__non_empty"],
+        ascending=[True, False, False, False],
+        inplace=True,
+    )
+
+    out = stacked.drop_duplicates(subset="email", keep="first") \
+                 .drop(columns=["__recency", "__non_empty", "__src_pri"], errors="ignore")
+
+    # flag truly new contacts relative to orig main
     existing = set(df_main["email"].dropna().astype(str).str.strip().str.lower().tolist())
     out["new_contact"] = out["email"].apply(lambda e: "Y" if e not in existing else "")
 
@@ -318,98 +325,46 @@ def merge_wix_contacts(df_main, df_wix):
 
 
 def final_email_dedup(df):
-    """
-    Final pass de-dup by email
-
-    Rule: if email exists in Main, keep Main row, Wix can only add new emails
-    Implementation: sort within each email so Main rows first, then keep first row
-    """
     df = df.copy()
-
-    # Build stable priority flag from persistent -source- col
-    # Main = 1, everything else (including Wix) = 0
-    if "source" in df.columns:
-        src = df["source"].astype(str).str.strip().str.lower()
+    if "last_activity_date" in df.columns:
+        df["__recency"] = pd.to_datetime(df["last_activity_date"], errors="coerce")
     else:
-        src = pd.Series("", index=df.index)
+        df["__recency"] = pd.NaT
+    df["__non_empty"] = df.replace("", pd.NA).notna().sum(axis=1)
+    df["__src_pri"] = (df.get("source", "") == "Wix").astype(int)
 
-    df["__main_pri"] = (src == "main").astype(int)
-
-    # Sort so Main wins for shared emails, use stable sort so ties keep existing order
     df.sort_values(
-        by=["email", "__main_pri"],
-        ascending=[True, False],
+        by=["email", "__src_pri", "__recency", "__non_empty"],
+        ascending=[True, False, False, False],
         inplace=True,
-        kind="mergesort",
     )
-
-    # one row per email, drop helper col
-    return (
-        df.drop_duplicates(subset="email", keep="first")
-          .drop(columns=["__main_pri"], errors="ignore")
-    )
+    return df.drop_duplicates(subset="email", keep="first").drop(columns=["__recency", "__non_empty", "__src_pri"], errors="ignore")
 
 
 def canonicalise_email_series(s: pd.Series) -> pd.Series:
-    """
-    Normalise email strs into canonical for matching and de-dup
-
-    - Remove 'mailto:' prefix and angle brackets
-    - Remove whitespace and common zero-width chars
-    - Apply Unicode normalisation (NFKC) and lowercase
-    - Strip '+tag' for certain providers (Gmail, Outlook/Hotmail/Live) to reduce dups
-    """
-    # Ensure str dtype so can safely apply .str ops
     s = s.astype(str)
+    s = s.str.replace(r"(?i)^mailto:", "", regex=True)
+    s = s.str.replace(r"[<>]", "", regex=True)
 
-    # Rem common wrappers in scraped/exported data
-    s = s.str.replace(r"(?i)^mailto:", "", regex=True)  # case-insensitive mailto:
-    s = s.str.replace(r"[<>]", "", regex=True)          # <someone@domain>
-
-    # Rem whitespace and invisible/zero-width Unicode characters that break matching
-    # (double escaping, as we're inside JS template string)
     s = s.str.replace(r"[\\s\\u200B-\\u200D\\u2060\\uFEFF]+", "", regex=True)
 
-    # Unicode normalisation + lowercase for stable comparison
     s = s.apply(lambda x: unicodedata.normalize("NFKC", x)).str.lower()
-
-    # Split to local part and domain (if malformed, extract returns NaN)
     local = s.str.extract(r"^([^@]+)@", expand=False)
-    dom   = s.str.extract(r"@(.+)$", expand=False)
-
-    # Only strip "+..." tags for providers where commonly used as equiv
-    strip_plus = dom.isin({
-        "gmail.com", "googlemail.com",
-        "outlook.com", "hotmail.com", "live.com", "live.co.uk",
-    })
-
-    # For selected domains, remove "+anything" from local part
+    dom = s.str.extract(r"@(.+)$", expand=False)
+    strip_plus = dom.isin({"gmail.com", "googlemail.com", "outlook.com", "hotmail.com", "live.com", "live.co.uk"})
     clean_local = local.where(~strip_plus, local.str.replace(r"\\+.*$", "", regex=True))
-
-    # Recombine, use empty strings where extraction failed
     return clean_local.fillna("") + "@" + dom.fillna("")
 
 
-def coalesce_email(df):
-    """
-    Ensure single -email- column by coalescing common variants
 
-    If multiple email-like columns exist (email_1, email1, email_2, ...),
-    take first non-null value across them (left to r), store it as -email-,
-    then drop redundant variant cols
-    """
+
+def coalesce_email(df):
     candidates = [c for c in ["email", "email_1", "email1", "email_2", "email2"] if c in df.columns]
     if not candidates:
         return df
-
-    # Backfill across candidate columns to pick first non-null value per row
     df["email"] = df[candidates].bfill(axis=1).iloc[:, 0]
-
-    # Drop other email cols now that we have unified email
     df.drop(columns=[c for c in candidates if c != "email"], inplace=True, errors="ignore")
-
     return df
-
 
 
 def extract_domain(series: pd.Series) -> pd.Series:
