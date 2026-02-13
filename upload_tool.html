@@ -209,6 +209,73 @@ york.gov.uk,80453,816,E06000014,York,YH,Yorkshire and the Humber
     return pd.read_csv(StringIO(raw_csv))
 
 
+# --- revised export schema control added 130226 ---
+DESIRED_EXPORT_ORDER = [
+    "rowid",
+    "duplicate",
+    "duplicate_priority",
+    "user_no_contact",
+    "opt_in_d2i",
+    "opt_in_nvest",
+    "opt_in_ffp",
+    "opt_in_send",
+    "non_la_filter",
+    "d2i_tool_access",
+    "d2i_early_help_access",
+    "new_contact",
+    "first_name",
+    "last_name",
+    "domain",
+    "email",
+    "region_code",
+    "region_name",
+    "urn",
+    "la_code",
+    "la_code_ons",
+    "local_authority",
+    "dcs_or_slt",
+    "send",
+    "apprenticeship",
+    "email subscriber status",
+    "last_activity",
+    "last_activity_date",
+    "last_activity_year",
+    "source",
+]
+
+# Opt. only used to align existing internal col names to export names above
+# If source column does not exist nothing happens
+EXPORT_RENAME_MAP = {
+    # failsafe, prev internal cols in script --> new export names
+    "la_code_new": "la_code_ons",
+    "dcs_or_senior_role": "dcs_or_slt",
+    "apprenticeships": "apprenticeship",
+    "email subscriber status": "email_subscriber_status",
+    "d2i": "opt_in_d2i",
+    "nvest": "opt_in_nvest",
+    # if you ever add these internally, they will map automatically:
+    # "ffp": "opt_in_ffp",      # added to handle JF new mail list
+    # "send": "opt_in_send",    # might need to keep an eye on this one.... 
+}
+
+def prepare_export_df(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Fix added for recent revisions in local contacts: towards improved clarity on who is on which mail-list! 
+    Rename known internal cols to desired export names (opt)
+    Reorder cols to DESIRED_EXPORT_ORDER only include those that exist
+    Append remaining columns at end (keep them does not drop)
+    """
+    out = df.copy()
+
+    # rename internal -> export (only where present)
+    out.rename(columns={k: v for k, v in EXPORT_RENAME_MAP.items() if k in out.columns}, inplace=True)
+
+    # reorder (only cols that exist)
+    preferred = [c for c in DESIRED_EXPORT_ORDER if c in out.columns]
+    remaining = [c for c in out.columns if c not in preferred]
+    return out[preferred + remaining]
+
+
 def clean_data(all_contacts):
     all_contacts.fillna("", inplace=True)
     all_contacts.replace(to_replace=r"^(nan|NaN|None|Nan)$", value="", regex=True, inplace=True)
@@ -321,7 +388,7 @@ def final_email_dedup(df):
     """
     Final pass de-dup by email
 
-    Rule: if email exists in Main, keep Main row, Wix can only add new emails
+    Rule: if email exists in Main, keep Main row, Wix can only add NEW emails
     Implementation: sort within each email so Main rows first, then keep first row
     """
     df = df.copy()
@@ -546,7 +613,11 @@ if df_main is not None:
     if all_contacts["email"].duplicated(keep=False).any():
         st.info("Resolve duplicate emails above, then the download button will appear.")
     else:
-        csv_data = all_contacts.to_csv(index=False).encode("utf-8")
+        # csv_data = all_contacts.to_csv(index=False).encode("utf-8")
+        # added 130226
+        export_df = prepare_export_df(all_contacts)
+        csv_data = export_df.to_csv(index=False).encode("utf-8")
+
         st.markdown('<div class="download-button-custom">', unsafe_allow_html=True)
         st.download_button(
             label="Download Merged Contacts",
